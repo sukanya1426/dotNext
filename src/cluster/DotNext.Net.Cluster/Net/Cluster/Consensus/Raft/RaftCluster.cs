@@ -684,7 +684,8 @@ public abstract partial class RaftCluster<TMember> : Disposable, IUnresponsiveCl
                     LastIndex = AuditTrail.LastEntryIndex,
                 }
             };
-            if (result.Term <= senderTerm)
+            // Frozen joiners (local node not yet in members) must still accept catch-up from the leader.
+            if (result.Term <= senderTerm && (members.LocalMember is null || members.ContainsKey(sender)))
             {
                 Timestamp.Refresh(ref lastUpdated);
                 await StepDownAsync(senderTerm, consensusReached: true).ConfigureAwait(false);
